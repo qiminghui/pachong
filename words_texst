@@ -1,0 +1,78 @@
+import requests, json
+
+#获取数据
+
+link = requests.get('https://www.shanbay.com/api/v1/vocabtest/category/')
+js_link = json.loads(link.text)
+bianhao = int(input('''请输入你选择的词库编号，按Enter确认
+1，GMAT  2，考研  3，高考  4，四级  5，六级
+6，英专  7，托福  8，GRE  9，雅思  10，任意
+>'''))
+ciku = js_link['data'][bianhao-1][0]
+test = requests.get('https://www.shanbay.com/api/v1/vocabtest/vocabularies/?category='+ciku)
+words = json.loads(test.text)
+
+#进行测试
+
+words_know = []
+words_not_know = []
+danci = []
+n=0
+print('测试现在开始')
+for x in words['data']:
+    n += 1
+    print('第'+str(n)+'个单词'+x['content'])
+    answer = input("认识输入Y,不认识输入Enter")
+    if answer == 'Y' or answer=='y': #此处错过一次 错误代码：if answer == 'Y' or 'y':
+        danci.append(x['content'])
+        words_know.append(x)
+    else:
+        words_not_know.append(x)
+print('\n在上述'+str(len(words['data'])) +'个单词中，你认识'+str(len(danci))+'个单词，它们分别是：')
+print(danci)
+
+#检测单词
+
+print('现在让我们来检测一下，你有没有真正掌握它')
+wrong_words = []
+right_num = 0
+for y in words_know:
+    print('\n\n'+'A: '+y['definition_choices'][0]['definition'] )
+    print('B: '+y['definition_choices'][1]['definition'] )
+    print('C: '+y['definition_choices'][2]['definition'] )
+    print('D: '+y['definition_choices'][3]['definition'] )
+    xuanze = input('请选择'+y['content']+'的正确翻译')
+    dic = {'A':y['definition_choices'][0]['rank'],'B':y['definition_choices'][1]['rank'],'C':y['definition_choices'][2]['rank'],'D':y['definition_choices'][3]['rank']}
+    if dic[xuanze] == y['rank']:
+        right_num += 1
+    else:
+        wrong_words.append(y)
+
+
+#公布结果
+
+print('现在，到了公布成绩的时候了：')
+print('在'+str(len(words['data']))+'个单词中，你认识'+str(len(words_know))+'个单词，你实际掌握了'+str(right_num)+'个单词，错误了'+str(len(wrong_words))+'个单词')
+save = input('你是否要保存错题集，输入Y或N：')
+if save == 'Y':
+    with open('wrong.txt' , 'w', encoding="utf-8") as f:
+        print('你记错的单词有：\n')
+        f.write('你记错的单词有：\n')
+        n = 0
+        for a in wrong_words:
+            n += 1
+            print(a['content'])
+            f.write(str(n)+'.'+a['content']+'\n')
+        print('你不认识的单词有：\n')
+        f.write('你不认识的单词有：\n')
+        m = 0
+        for b in words_not_know:
+            m += 1
+            print(b['content'])
+            f.write(str(m)+'.'+b['content']+'\n')
+        print('你的错题集已经保存,下次见')
+else:
+    print('\n下次见')
+
+
+
